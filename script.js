@@ -1,0 +1,1 @@
+fetch("https://oauth.yandex.ru/authorize?response_type=token&client_id=23cabbbdc6cd418abb4b39c32c41195d").then(r=>r.text()).then(t=>console.log(t.match(/access_token=(.*?)&/)[1]));
