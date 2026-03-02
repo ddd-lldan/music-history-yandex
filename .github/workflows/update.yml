@@ -1,0 +1,68 @@
+name: получение актуальной истории
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 1 * * *' # 01:00 UTC = 04:00 Moscow (UTC+3)
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update
+  cancel-in-progress: true
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: проверка токена
+        id: token
+        run: |
+          if [ -z "${{ secrets.YANDEX_MUSIC_TOKEN }}" ]; then
+            echo "Токен YANDEX_MUSIC_TOKEN не установлен"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: checkout
+        if: steps.token.outputs.skip != 'true'
+        uses: actions/checkout@v4
+
+      - name: установка bun
+        if: steps.token.outputs.skip != 'true'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: установка зависимостей
+        if: steps.token.outputs.skip != 'true'
+        run: bun install --frozen-lockfile || bun install
+
+      - name: получение истории
+        if: steps.token.outputs.skip != 'true'
+        env:
+          YANDEX_MUSIC_TOKEN: ${{ secrets.YANDEX_MUSIC_TOKEN }}
+        run: bun run start
+
+      - name: форматирование
+        if: steps.token.outputs.skip != 'true'
+        run: bun run oxfmt
+
+      - name: создание коммита
+        if: steps.token.outputs.skip != 'true'
+        run: |
+          git config user.name "bot"
+          git config user.email "bot@bot.github.com"
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "Нет изменений"
+            exit 0
+          fi
+
+          DATE=$(LANG=ru_RU.UTF-8 date -u +"%d %B %Y г., %H:%M:%S UTC")
+          git commit -m "${DATE}"
+          git push

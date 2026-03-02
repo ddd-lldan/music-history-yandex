@@ -1,0 +1,22 @@
+{
+    "name": "music-history-yandex",
+    "module": "index.ts",
+    "author": {
+        "name": "lldan"
+    },
+    "scripts": {
+        "start": "bun run index.ts",
+        "format": "time oxfmt"
+    },
+    "type": "module",
+    "license": "MIT",
+    "devDependencies": {
+        "@types/bun": "latest"
+    },
+    "peerDependencies": {
+        "typescript": "5.9.3"
+    },
+    "dependencies": {
+        "oxfmt": "0.36.0"
+    }
+}
